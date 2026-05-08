@@ -1,34 +1,152 @@
 # llama
 
-- [fork llama - llama-cpp-turboquant](https://github.com/TheTom/llama-cpp-turboquant)
-- [fork llama - ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp)
-- [fork llama - turboquant build for AMD](https://github.com/TheTom/llama-cpp-turboquant/blob/feature/turboquant-kv-cache/docs/build.md#hip)
-- [fork llama - turboquant docker](https://github.com/TheTom/llama-cpp-turboquant/blob/feature/turboquant-kv-cache/docs/docker.md)
+- [fork llama - llama-cpp-turboquant - readme](https://github.com/TheTom/llama-cpp-turboquant)
+- [fork llama - llama-cpp-turboquant - build for AMD](https://github.com/TheTom/llama-cpp-turboquant/blob/feature/turboquant-kv-cache/docs/build.md#hip)
+- [fork llama - llama-cpp-turboquant - docker](https://github.com/TheTom/llama-cpp-turboquant/blob/feature/turboquant-kv-cache/docs/docker.md)
+
+## non moe model
+
 - [models - YTan2000/Qwen3.6-27B-TQ3_4S - turboquant llama.cpp - 13gb](https://huggingface.co/YTan2000/Qwen3.6-27B-TQ3_4S)
-- [models - bartowski/Qwen_Qwen3.6-35B-A3B-GGUF - turboquant llama.cpp - 21gb](https://huggingface.co/bartowski/Qwen_Qwen3.6-35B-A3B-GGUF)
-- [models - abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF - ik_llama.cpp - 19gb](https://huggingface.co/abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF)
-- [models - mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit - 15.1gb](https://huggingface.co/mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit)
-- [models - lmstudio-community/Qwen3.6-35B-A3B-GGUF - 21.2gb](https://huggingface.co/lmstudio-community/Qwen3.6-35B-A3B-GGUF)
 - [models - Jackrong/Negentropy-claude-opus-4.7-9B-GGUF - 5.63gb](https://huggingface.co/Jackrong/Negentropy-claude-opus-4.7-9B-GGUF)
 
+## moe model
+
+- [models - bartowski/Qwen_Qwen3.6-35B-A3B-GGUF - turboquant llama.cpp - 21.4gb](https://huggingface.co/bartowski/Qwen_Qwen3.6-35B-A3B-GGUF)
+- [models - Jackrong/Qwopus3.6-35B-A3B-v1-GGUF - reasoning-enhanced MoE - 21.2gb](https://huggingface.co/Jackrong/Qwopus3.6-35B-A3B-v1-GGUF)
+- [models - lmstudio-community/Qwen3.6-35B-A3B-GGUF - 21.2gb](https://huggingface.co/lmstudio-community/Qwen3.6-35B-A3B-GGUF)
+
+## mlx model
+
+- [models - mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit - 15.1gb](https://huggingface.co/mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit)
+
+
+## Only Supported NVIDIA
+
+- [fork llama - ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp)
+- [models - abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF - ik_llama.cpp - 19gb](https://huggingface.co/abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF)
+
+## Install ROCM untuk GPU AMD RX6600
+
 ```bash
-docker run --rm --gpus all \
-    --ulimit memlock=-1 \
-    --cap-add=IPC_LOCK \
-    -v /root:/root \
-    -w /root/llama-cpp-turboquant \
-    -p 8080:8080 \
-    nvidia/cuda:12.4.1-devel-ubuntu22.04 \
-    ./build/bin/llama-server \
-    -m /root/models/Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf \
-    --port 8080 --host 0.0.0.0 \
-    --cache-type-k turbo4 --cache-type-v turbo3 \
-    --n-cpu-moe 36 \
-    -ngl 99 \
-    --no-mmap --mlock \
-    --jinja \
-    -c 256000
+sudo paru -S rocm-hip-sdk rocm-opencl-sdk
 ```
+
+set to environment variables
+
+```
+export HSA_OVERRIDE_GFX_VERSION 10.3.0
+export HIP_VISIBLE_DEVICES 0
+export ROCM_PATH /opt/rocm
+```
+
+## Cara build llama.cpp turboquant yang support ROCM
+
+```bash
+HIPCXX="/opt/rocm/lib/llvm/bin/clang" HIP_PATH="/opt/rocm" \
+    cmake -S . -B build -DGGML_HIP=ON -DGPU_TARGETS=gfx1030 -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --config Release -- -j 16
+```
+
+## Cara build original llama.cpp untuk ROCM
+
+```bash
+HIPCXX="/opt/rocm/lib/llvm/bin/clang" \
+    HIP_PATH="/opt/rocm" \
+    cmake -S . -B build -DGGML_HIP=ON -DGPU_TARGETS=gfx1030 -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build --config Release -- -j 16
+```
+
+## Cara build ik_llama.cpp untuk ROCM
+
+```bash
+HIPCXX="/opt/rocm/lib/llvm/bin/clang" \
+HIP_PATH="/opt/rocm" \
+cmake -S . -B build \
+  -DGGML_HIP=ON \
+  -DGGML_HIPBLAS=ON \
+  -DGGML_NATIVE=ON \
+  -DGPU_TARGETS=gfx1030 \
+  -DCMAKE_BUILD_TYPE=Release
+
+cmake --build build --config Release -j$(nproc)
+```
+
+notes: ik_llama.cpp ga support untuk ROCM
+
+## Cara menjalankan
+
+```bash
+./build/bin/llama-server \
+        --model /home/labkita/models/models--bartowski--Qwen_Qwen3.6-27B-GGUF/blobs/d797b531c527bea28a04fdb326515c43114f798a4fa2a5c1c0e0cffaeaa6fd09 \
+        --port 8080 --host 0.0.0.0 \
+        --n-gpu-layers 22 \
+        --n-cpu-moe 35 \
+        --no-mmap \
+        --ctx-size 131072 \
+        --cache-type-k turbo4 \
+        --cache-type-v turbo3 \
+        --mlock \
+        --jinja
+```
+
+## Cara test endpoint
+
+```bash
+curl http://192.168.18.120:8080/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+            "model": "Qwen3.6-27B",
+            "messages": [
+                {
+                "role": "user",
+                "content": "Halo, kamu model apa?"
+                }
+            ],
+            "max_tokens": 100,
+            "temperature": 0.7
+        }'
+```
+
+## Config di gowails
+
+```json
+    "llama-cpp": {
+        "api_url": "http://192.168.18.120:8080/v1",
+        "api_key": "sasa",
+        "available_models": [
+          {
+            "name": "Qwen3.6-27B",
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": true,
+              "prompt_cache_key": false,
+              "chat_completions": true
+            }
+          }
+        ]
+      }
+```
+
+## Config di librechat
+
+```yaml
+    - name: "llamacpp"
+    baseURL: "http://192.168.18.120:8080/v1"
+    apiKey: "sk-TAegllbZgaGokvWCPn0RlDMsNIy2ohgqOODiYBycsm5qsIfbhWw6JS8QGVoqrdKt"
+    models:
+        default: [
+        "Qwen3.6-27B"
+        ]
+        fetch: false
+    titleConvo: true
+    titleModel: "llamacpp"
+    summarize: false
+    summaryModel: "llamacpp"
+    modelDisplayLabel: "llamacpp"
+```
+
+## Penjelasan flag
 
 | Flag | Penjelasan teknis | Dampak / Kenapa dipakai |
 |------|-------------------|-------------------------|
@@ -51,21 +169,6 @@ docker run --rm --gpus all \
 
 > **Catatan:** Flag `--no-mmap` dan `--mlock` berfungsi bersamaan. `--no-mmap` **meng‑load kernel‑file secara eager** (bukan lazy‑map). `--mlock` membuat bagian memori yang memegang **data model + cache** tetap di RAM dan tidak dapat dialihkan ke swap. Ini penting ketika Anda ingin menjamin *low‑latency* dan menghindari page‑fault yang dapat menunda request pertama.
 
-
-```bash
-./build/bin/llama-server \
-  --model /root/models/Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf \
-  --port 8080 --host 0.0.0.0 \
-  --n-gpu-layers 99 \
-  --n-cpu-moe 35 \
-  --no-map \
-  --ctx-size 131072 \
-  --cache-type-k turbo4 \
-  --cache-type-v turbo3 \
-  --mlock \
-  --jinja
-```
-
 | Flag | Penjelasan (ulang) | Penjelasan tambahan |
 |------|-------------------|---------------------|
 | `--n-gpu-layers 999` | Offload **seluruh** layer modelo ke GPU (999 > jumlah layer sebenarnya). | Pastikan **VRAM** (mis. 40 GB A100) cukup untuk semua layer + cache. |
@@ -84,3 +187,113 @@ docker run --rm --gpus all \
 > - CPU hanya digunakan untuk MoE atau I/O (jika ada).
 
 Powerful? **Ya** — tetapantara librasi memori gigantic; Resource‑intensive? **Sangat**. Jangan jalankan sebelum memastikan *resource budget* (RAM, VRAM, swap) memang cukup.
+
+contoh:
+
+```bash
+docker run --rm --gpus all \
+    --ulimit memlock=-1 \
+    --cap-add=IPC_LOCK \
+    -v /root:/root \
+    -w /root/llama-cpp-turboquant \
+    -p 8080:8080 \
+    nvidia/cuda:12.4.1-devel-ubuntu22.04 \
+    ./build/bin/llama-server \
+    -m /root/models/Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf \
+    --port 8080 --host 0.0.0.0 \
+    --cache-type-k turbo4 --cache-type-v turbo3 \
+    --n-cpu-moe 36 \
+    -ngl 99 \
+    --no-mmap --mlock \
+    --jinja \
+    -c 256000
+```
+
+```bash
+./build/bin/llama-server \
+  --model /root/models/Qwen_Qwen3.6-35B-A3B-Q4_K_M.gguf \
+  --port 8080 --host 0.0.0.0 \
+  --n-gpu-layers 99 \
+  --n-cpu-moe 35 \
+  --no-map \
+  --ctx-size 131072 \
+  --cache-type-k turbo4 \
+  --cache-type-v turbo3 \
+  --mlock \
+  --jinja
+```
+
+## Contoh LM Studio service
+
+create file di `/etc/systemd/system/lmstudio.service`
+
+```
+[Unit]
+Description=LM Studio Server
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=labkita
+Environment="HOME=/home/labkita"
+
+# =========================
+# START
+# =========================
+
+# Start daemon
+ExecStartPre=/home/labkita/.lmstudio/bin/lms daemon up
+
+# Clean state sebelum load (penting biar tidak numpuk model lama)
+ExecStartPre=/home/labkita/.lmstudio/bin/lms unload --all
+
+# Load model utama (Qwen 9B)
+# ExecStartPre=/home/labkita/.lmstudio/bin/lms load qwen/qwen2.5-coder-7b --yes --gpu 1 --parallel 3 -c 32768
+# ExecStartPre=/home/labkita/.lmstudio/bin/lms load qwen/qwen3-4b-2507 --yes --gpu 1 --parallel 3 -c 262144
+# ExecStartPre=/home/labkita/.lmstudio/bin/lms load qwen/qwen3.5-9b --yes --gpu 1 --parallel 3 -c 262144
+# ExecStartPre=/home/labkita/.lmstudio/bin/lms load google/gemma-4-e4b --yes --gpu 1 --parallel 3 -c 131072
+# ExecStartPre=/home/labkita/.lmstudio/bin/lms load deepseek/deepsek-r1-0528-qwen3-8b --yes --gpu 1 --parallel 3 -c 131072
+ExecStartPre=/home/labkita/.lmstudio/bin/lms load codegemma-7b-it --yes --gpu 1 --parallel 4 -c 8192
+
+# Start API server
+ExecStart=/home/labkita/.lmstudio/bin/lms server start --bind "0.0.0.0" --cors
+
+# =========================
+# STOP (clean shutdown)
+# =========================
+
+# Unload semua model dari VRAM/RAM (ini yang penting banget)
+ExecStopPre=/home/labkita/.lmstudio/bin/lms unload --all
+
+# Delay 1 detik
+# ExecStopPre=/bin/sleep 1
+
+# Stop API server dulu
+ExecStopPre=/home/labkita/.lmstudio/bin/lms server stop
+
+# Matikan daemon terakhir
+ExecStop=/home/labkita/.lmstudio/bin/lms daemon down
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## Cara menjalankan lm studio service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl start lmstudio.service
+sudo systemctl enable lmstudio.service
+sudo systemctl status lmstudio.service
+```
+
+## Beberapa command lm studio cli
+
+```bash
+# cek model yg sedang di load
+lms ps
+lms ls
+# download gguf dr hugging face
+lms get https://huggingface.co/lmstudio-community/codegemma-7b-it-GGUF
+``
