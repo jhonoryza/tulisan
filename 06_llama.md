@@ -9,6 +9,7 @@
 - [models - abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF - ik_llama.cpp - 19gb](https://huggingface.co/abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF)
 - [models - mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit - 15.1gb](https://huggingface.co/mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit)
 - [models - lmstudio-community/Qwen3.6-35B-A3B-GGUF - 21.2gb](https://huggingface.co/lmstudio-community/Qwen3.6-35B-A3B-GGUF)
+- [models - Jackrong/Negentropy-claude-opus-4.7-9B-GGUF - 5.63gb](https://huggingface.co/Jackrong/Negentropy-claude-opus-4.7-9B-GGUF)
 
 ```bash
 docker run --rm --gpus all \
