@@ -1,20 +1,23 @@
 # llama
 
-- [fork llama - llama-cpp-turboquant - readme](https://github.com/TheTom/llama-cpp-turboquant)
-- [fork llama - llama-cpp-turboquant - build for AMD](https://github.com/TheTom/llama-cpp-turboquant/blob/feature/turboquant-kv-cache/docs/build.md#hip)
-- [fork llama - llama-cpp-turboquant - docker](https://github.com/TheTom/llama-cpp-turboquant/blob/feature/turboquant-kv-cache/docs/docker.md)
-- [fork llama - llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3)
-
 ## non moe model
 
+- [fork llama - llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3)
 - [models - YTan2000/Qwen3.6-27B-TQ3_4S - turboquant llama.cpp - 13gb](https://huggingface.co/YTan2000/Qwen3.6-27B-TQ3_4S)
 - [models - Jackrong/Negentropy-claude-opus-4.7-9B-GGUF - 5.63gb](https://huggingface.co/Jackrong/Negentropy-claude-opus-4.7-9B-GGUF)
 
 ## moe model
 
+- [fork llama - llama-cpp-turboquant - readme](https://github.com/TheTom/llama-cpp-turboquant)
 - [models - bartowski/Qwen_Qwen3.6-35B-A3B-GGUF - turboquant llama.cpp - 21.4gb](https://huggingface.co/bartowski/Qwen_Qwen3.6-35B-A3B-GGUF)
 - [models - Jackrong/Qwopus3.6-35B-A3B-v1-GGUF - reasoning-enhanced MoE - 21.2gb](https://huggingface.co/Jackrong/Qwopus3.6-35B-A3B-v1-GGUF)
 - [models - lmstudio-community/Qwen3.6-35B-A3B-GGUF - 21.2gb](https://huggingface.co/lmstudio-community/Qwen3.6-35B-A3B-GGUF)
+
+- [YTan2000/Qwen3.6-35B-A3B-TQ3_4S](https://huggingface.co/YTan2000/Qwen3.6-35B-A3B-TQ3_4S)
+- [YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S](https://huggingface.co/YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S)
+- [deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct](https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct)
+- [mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF](https://huggingface.co/mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF)
+- [google/gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)
 
 ## mlx model
 
@@ -104,6 +107,24 @@ notes: ik_llama.cpp ga support untuk ROCM
     --parallel 1 \
     --batch-size 512 \
     --ubatch-size 128 \
+    --jinja
+
+ # gpu offload sebagian dan model nya bukan moe
+ # lemot
+ ./build/bin/llama-server \
+    --model /home/labkita/models/models--YTan2000--Qwen3.6-27B-TQ3_4S/blobs/dcdee579deeccb5a84a85dab1fba7e73792b94c010480cb3ee9214dbc74a4e6b \
+    --port 8080 --host 0.0.0.0 \
+    --n-gpu-layers 35 \
+    --no-mmap \
+    --ctx-size 32768 \
+    --cache-type-k q8_0 \
+    --cache-type-v q8_0 \
+    --mlock \
+    --parallel 1 \
+    --batch-size 254 \
+    --ubatch-size 64 \
+    --flash-attn 'on' \
+    --no-warmup \
     --jinja
 ```
 
