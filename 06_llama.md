@@ -3,6 +3,7 @@
 - [fork llama - llama-cpp-turboquant - readme](https://github.com/TheTom/llama-cpp-turboquant)
 - [fork llama - llama-cpp-turboquant - build for AMD](https://github.com/TheTom/llama-cpp-turboquant/blob/feature/turboquant-kv-cache/docs/build.md#hip)
 - [fork llama - llama-cpp-turboquant - docker](https://github.com/TheTom/llama-cpp-turboquant/blob/feature/turboquant-kv-cache/docs/docker.md)
+- [fork llama - llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3)
 
 ## non moe model
 
@@ -50,8 +51,7 @@ HIPCXX="/opt/rocm/lib/llvm/bin/clang" HIP_PATH="/opt/rocm" \
 ## Cara build original llama.cpp untuk ROCM
 
 ```bash
-HIPCXX="/opt/rocm/lib/llvm/bin/clang" \
-    HIP_PATH="/opt/rocm" \
+HIPCXX="/opt/rocm/lib/llvm/bin/clang" HIP_PATH="/opt/rocm" \
     cmake -S . -B build -DGGML_HIP=ON -DGPU_TARGETS=gfx1030 -DCMAKE_BUILD_TYPE=Release \
     && cmake --build build --config Release -- -j 16
 ```
@@ -73,20 +73,133 @@ cmake --build build --config Release -j$(nproc)
 
 notes: ik_llama.cpp ga support untuk ROCM
 
-## Cara menjalankan
+## Cara menjalankan untuk ROCM
 
 ```bash
 ./build/bin/llama-server \
-        --model /home/labkita/models/models--bartowski--Qwen_Qwen3.6-27B-GGUF/blobs/d797b531c527bea28a04fdb326515c43114f798a4fa2a5c1c0e0cffaeaa6fd09 \
-        --port 8080 --host 0.0.0.0 \
-        --n-gpu-layers 22 \
-        --n-cpu-moe 35 \
-        --no-mmap \
-        --ctx-size 131072 \
-        --cache-type-k turbo4 \
-        --cache-type-v turbo3 \
-        --mlock \
-        --jinja
+    --model /home/labkita/models/models--bartowski--Qwen_Qwen3.6-35B-A3B-GGUF/blobs/6f5c72e2cde7fb0a1584cc009cdb4513f26733740369d3e2df0e7d7247112d05 \
+    --port 8080 --host 0.0.0.0 \
+    --n-gpu-layers 99 \
+    --n-cpu-moe 34 \
+    --no-mmap \
+    --ctx-size 262144 \
+    --cache-type-k turbo4 \
+    --cache-type-v turbo3 \
+    --mlock \
+    --parallel 1 \
+    --batch-size 1024 \
+    --ubatch-size 256 \
+    --jinja
+
+ ./build/bin/llama-server \
+    --model /home/labkita/models/models--bartowski--Qwen_Qwen3.6-35B-A3B-GGUF/blobs/6f5c72e2cde7fb0a1584cc009cdb4513f26733740369d3e2df0e7d7247112d05 \
+    --port 8080 --host 0.0.0.0 \
+    --n-gpu-layers 99 \
+    --n-cpu-moe 29 \
+    --no-mmap \
+    --ctx-size 65536 \
+    --cache-type-k turbo4 \
+    --cache-type-v turbo3 \
+    --mlock \
+    --parallel 1 \
+    --batch-size 512 \
+    --ubatch-size 128 \
+    --jinja
+```
+
+performance di RX6600 8GB:
+- model bartowski/Qwen_Qwen3.6-35B-A3B-GGUF
+- prompt eval 49.67 tok/s
+- generate 20.49 tok/s
+- vram usage 6238 MB, free 1540 MB
+- ram usage 16144 MB
+- context 262144
+
+## Cara benchmark
+
+```bash
+./build/bin/llama-bench \
+  -m /home/labkita/models/models--bartowski--Qwen_Qwen3.6-35B-A3B-GGUF/blobs/6f5c72e2cde7fb0a1584cc009cdb4513f26733740369d3e2df0e7d7247112d05 \
+  -ngl 99 \
+  -ncmoe 34 \
+  -mmp 0 \
+  -b 1024 \
+  -ub 256 \
+  -ctk turbo4 \
+  -ctv turbo3 \
+  -p 0 \
+  -n 128 \
+  -r 1 
+  # -fitc 262144
+
+./build/bin/llama-bench \
+  -m /home/labkita/models/models--bartowski--Qwen_Qwen3.6-35B-A3B-GGUF/blobs/6f5c72e2cde7fb0a1584cc009cdb4513f26733740369d3e2df0e7d7247112d05 \
+  -ngl 99 \
+  -ncmoe 29 \
+  -mmp 0 \
+  -b 256 \
+  -ub 64 \
+  -ctk turbo4 \
+  -ctv turbo3 \
+  -p 0 \
+  -n 128 \
+  -r 1 
+  # -fitc 65536
+```
+
+```
+options:
+  -h, --help
+  --numa <distribute|isolate|numactl>         numa mode (default: disabled)
+  -r, --repetitions <n>                       number of times to repeat each test (default: 5)
+  --prio <-1|0|1|2|3>                         process/thread priority (default: 0)
+  --delay <0...N> (seconds)                   delay between each test (default: 0)
+  -o, --output <csv|json|jsonl|md|sql>        output format printed to stdout (default: md)
+  -oe, --output-err <csv|json|jsonl|md|sql>   output format printed to stderr (default: none)
+  --list-devices                              list available devices and exit
+  -v, --verbose                               verbose output
+  --progress                                  print test progress indicators
+  --no-warmup                                 skip warmup runs before benchmarking
+  -fitt, --fit-target <MiB>                   fit model to device memory with this margin per device in MiB (default: off)
+  -fitc, --fit-ctx <n>                        minimum ctx size for --fit-target (default: 4096)
+
+test parameters:
+  -m, --model <filename>                      (default: models/7B/ggml-model-q4_0.gguf)
+  -hf, -hfr, --hf-repo <user>/<model>[:quant] Hugging Face model repository; quant is optional, case-insensitive
+                                              default to Q4_K_M, or falls back to the first file in the repo if Q4_K_M doesn't exist.
+                                              example: ggml-org/GLM-4.7-Flash-GGUF:Q4_K_M
+                                              (default: unused)
+  -hff, --hf-file <file>                      Hugging Face model file. If specified, it will override the quant in --hf-repo
+                                              (default: unused)
+  -hft, --hf-token <token>                    Hugging Face access token
+                                              (default: value from HF_TOKEN environment variable)
+  -p, --n-prompt <n>                          (default: 512)
+  -n, --n-gen <n>                             (default: 128)
+  -pg <pp,tg>                                 (default: )
+  -d, --n-depth <n>                           (default: 0)
+  -b, --batch-size <n>                        (default: 2048)
+  -ub, --ubatch-size <n>                      (default: 512)
+  -ctk, --cache-type-k <t>                    (default: f16)
+  -ctv, --cache-type-v <t>                    (default: f16)
+  -t, --threads <n>                           (default: 4)
+  -C, --cpu-mask <hex,hex>                    (default: 0x0)
+  --cpu-strict <0|1>                          (default: 0)
+  --poll <0...100>                            (default: 50)
+  -ngl, --n-gpu-layers <n>                    (default: 99)
+  -ncmoe, --n-cpu-moe <n>                     (default: 0)
+  -sm, --split-mode <none|layer|row|tensor>   (default: layer)
+  -mg, --main-gpu <i>                         (default: 0)
+  -nkvo, --no-kv-offload <0|1>                (default: 0)
+  -fa, --flash-attn <0|1>                     (default: 0)
+  -dev, --device <dev0/dev1/...>              (default: auto)
+  -mmp, --mmap <0|1>                          (default: 1)
+  -dio, --direct-io <0|1>                     (default: 0)
+  -embd, --embeddings <0|1>                   (default: 0)
+  -ts, --tensor-split <ts0/ts1/..>            (default: 0)
+  -ot --override-tensor <tensor name pattern>=<buffer type>;...
+                                              (default: disabled)
+  -nopo, --no-op-offload <0|1>                (default: 0)
+  --no-host <0|1>                             (default: 0)
 ```
 
 ## Cara test endpoint
