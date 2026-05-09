@@ -2,32 +2,57 @@
 
 ## non moe model
 
-- [fork llama - llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3)
-- [models - YTan2000/Qwen3.6-27B-TQ3_4S - turboquant llama.cpp - 13gb](https://huggingface.co/YTan2000/Qwen3.6-27B-TQ3_4S)
-- [models - Jackrong/Negentropy-claude-opus-4.7-9B-GGUF - 5.63gb](https://huggingface.co/Jackrong/Negentropy-claude-opus-4.7-9B-GGUF)
+perlu fork [llama.cpp-tq3]((https://github.com/turbo-tan/llama.cpp-tq3)):
+
+- [x] [models - YTan2000/Qwen3.6-27B-TQ3_4S - turboquant llama.cpp - 13gb](https://huggingface.co/YTan2000/Qwen3.6-27B-TQ3_4S)
+- [ ] [models - Jackrong/Negentropy-claude-opus-4.7-9B-GGUF - 5.63gb](https://huggingface.co/Jackrong/Negentropy-claude-opus-4.7-9B-GGUF)
 
 ## moe model
 
-- [fork llama - llama-cpp-turboquant - readme](https://github.com/TheTom/llama-cpp-turboquant)
-- [models - bartowski/Qwen_Qwen3.6-35B-A3B-GGUF - turboquant llama.cpp - 21.4gb](https://huggingface.co/bartowski/Qwen_Qwen3.6-35B-A3B-GGUF)
-- [models - Jackrong/Qwopus3.6-35B-A3B-v1-GGUF - reasoning-enhanced MoE - 21.2gb](https://huggingface.co/Jackrong/Qwopus3.6-35B-A3B-v1-GGUF)
-- [models - lmstudio-community/Qwen3.6-35B-A3B-GGUF - 21.2gb](https://huggingface.co/lmstudio-community/Qwen3.6-35B-A3B-GGUF)
+perlu fork [llama-cpp-turboquant](https://github.com/TheTom/llama-cpp-turboquant):
 
-- [YTan2000/Qwen3.6-35B-A3B-TQ3_4S](https://huggingface.co/YTan2000/Qwen3.6-35B-A3B-TQ3_4S)
-- [YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S](https://huggingface.co/YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S)
-- [deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct](https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct)
-- [mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF](https://huggingface.co/mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF)
-- [google/gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)
+- [x] [models - bartowski/Qwen_Qwen3.6-35B-A3B-GGUF - turboquant llama.cpp - 21.4gb](https://huggingface.co/bartowski/Qwen_Qwen3.6-35B-A3B-GGUF)
+- [x] [models - Jackrong/Qwopus3.6-35B-A3B-v1-GGUF - reasoning-enhanced MoE - 21.2gb](https://huggingface.co/Jackrong/Qwopus3.6-35B-A3B-v1-GGUF)
+- [ ] [models - lmstudio-community/Qwen3.6-35B-A3B-GGUF - 21.2gb](https://huggingface.co/lmstudio-community/Qwen3.6-35B-A3B-GGUF)
+- [ ] [deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct](https://huggingface.co/deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct)
+- [ ] [mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF](https://huggingface.co/mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF)
+- [ ] [google/gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)
+
+perlu fork [llama.cpp-tq3]((https://github.com/turbo-tan/llama.cpp-tq3)):
+
+- [x] [YTan2000/Qwen3.6-35B-A3B-TQ3_4S](https://huggingface.co/YTan2000/Qwen3.6-35B-A3B-TQ3_4S)
+- [ ] [YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S](https://huggingface.co/YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S)
+
+## dflash model
+
+- [x] [starskyzheng/Qwen3.6-35B-DFlash-GGUF](https://huggingface.co/starskyzheng/Qwen3.6-35B-DFlash-GGUF)
+
+DFlash = “speed booster via speculative decoding” mengurangi kerja model utama dengan “tebakan awal” dari model kecil
+
+Draft model (model kecil/lebih ringan) yang dipakai untuk “menebak” token berikutnya lebih cepat (misal 4–8 token).
+
+```bash
+./build/bin/llama-server \ 
+    -m /path/to/Qwen3.6-35B-target.Q4_K_M.gguf \ 
+    -md /path/to/dflash-draft-3.6-q8_0.gguf \ 
+    --spec-type dflash \ 
+    -ngl 99 -ngld 99 \ 
+    -np 1 -c 6048 -cd 256 \ 
+    -fa on -b 256 -ub 64 \ 
+    --host 0.0.0.0 --port 8080 --jinja \ 
+    --chat-template-kwargs '{"enable_thinking": false}'
+```
 
 ## mlx model
 
-- [models - mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit - 15.1gb](https://huggingface.co/mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit)
+- [ ] [models - mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit - 15.1gb](https://huggingface.co/mlx-community/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-4bit)
 
 
-## Only Supported NVIDIA
+## Only Support NVIDIA
 
-- [fork llama - ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp)
-- [models - abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF - ik_llama.cpp - 19gb](https://huggingface.co/abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF)
+perlu fork [llama ik_llama.cpp](https://github.com/ikawrakow/ik_llama.cpp):
+
+- [x] [models - abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF - ik_llama.cpp - 19gb](https://huggingface.co/abovespec/Qwen3.6-35B-A3B-IQ4_K_R4-GGUF)
 
 ## Install ROCM untuk GPU AMD RX6600
 
@@ -43,7 +68,9 @@ export HIP_VISIBLE_DEVICES 0
 export ROCM_PATH /opt/rocm
 ```
 
-## Cara build llama.cpp turboquant yang support ROCM
+## Cara build llama.cpp original, fork llama-cpp-turboquant, fork llama.cpp-tq3
+
+support ROCM:
 
 ```bash
 HIPCXX="/opt/rocm/lib/llvm/bin/clang" HIP_PATH="/opt/rocm" \
@@ -51,15 +78,9 @@ HIPCXX="/opt/rocm/lib/llvm/bin/clang" HIP_PATH="/opt/rocm" \
     && cmake --build build --config Release -- -j 16
 ```
 
-## Cara build original llama.cpp untuk ROCM
+## Cara build llama.cpp fork ik_llama.cpp
 
-```bash
-HIPCXX="/opt/rocm/lib/llvm/bin/clang" HIP_PATH="/opt/rocm" \
-    cmake -S . -B build -DGGML_HIP=ON -DGPU_TARGETS=gfx1030 -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build build --config Release -- -j 16
-```
-
-## Cara build ik_llama.cpp untuk ROCM
+support ROCM:
 
 ```bash
 HIPCXX="/opt/rocm/lib/llvm/bin/clang" \
@@ -74,9 +95,12 @@ cmake -S . -B build \
 cmake --build build --config Release -j$(nproc)
 ```
 
-notes: ik_llama.cpp ga support untuk ROCM
+notes: ik_llama.cpp ga support untuk ROCM sehingga build nya failed
 
-## Cara menjalankan untuk ROCM
+## Cara menjalankan
+
+support: ROCM
+model: Qwen_Qwen3.6-35B-A3B-GGUF
 
 ```bash
 ./build/bin/llama-server \
@@ -109,6 +133,18 @@ notes: ik_llama.cpp ga support untuk ROCM
     --ubatch-size 128 \
     --jinja
 
+performance di RX6600 8GB:
+- model bartowski/Qwen_Qwen3.6-35B-A3B-GGUF
+- prompt eval 49.67 tok/s
+- generate 20.49 tok/s
+- vram usage 6238 MB, free 1540 MB
+- ram usage 16144 MB
+- context 262144
+
+
+support: ROCM
+model: Qwen3.6-27B-TQ3_4S
+
  # gpu offload sebagian dan model nya bukan moe
  # lemot
  ./build/bin/llama-server \
@@ -128,15 +164,7 @@ notes: ik_llama.cpp ga support untuk ROCM
     --jinja
 ```
 
-performance di RX6600 8GB:
-- model bartowski/Qwen_Qwen3.6-35B-A3B-GGUF
-- prompt eval 49.67 tok/s
-- generate 20.49 tok/s
-- vram usage 6238 MB, free 1540 MB
-- ram usage 16144 MB
-- context 262144
-
-## Cara benchmark
+## Contoh cara benchmark
 
 ```bash
 ./build/bin/llama-bench \
