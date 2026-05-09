@@ -78,6 +78,17 @@ HIPCXX="/opt/rocm/lib/llvm/bin/clang" HIP_PATH="/opt/rocm" \
     && cmake --build build --config Release -- -j 16
 ```
 
+support macos:
+
+```bash
+cmake -B build \
+  -DGGML_METAL=ON \
+  -DGGML_METAL_EMBED_LIBRARY=ON \
+  -DGGML_METAL_FLASH_ATTN=ON
+
+cmake --build build -j$(sysctl -n hw.ncpu)
+```
+
 ## Cara build llama.cpp fork ik_llama.cpp
 
 support ROCM:
@@ -162,6 +173,35 @@ model: Qwen3.6-27B-TQ3_4S
     --flash-attn 'on' \
     --no-warmup \
     --jinja
+
+ ./build/bin/llama-server \
+  -hf mradermacher/Qwen3-Desert.Coder.MoE-8X0.6B-i1-GGUF:Q4_K_M \
+  --port 8080 --host 0.0.0.0 \
+  --n-gpu-layers 99 \
+  --ctx-size 40290 \
+  --cache-type-k f16 \
+  --cache-type-v f16 \
+  --flash-attn 1 \
+  --parallel 1 \
+  -b 512 -ub 254 \
+  --chat-template-kwargs '{"preserve_thinking": false}'
+
+  ./build/bin/llama-server \
+      --model /Users/fajar/models/models--YTan2000--Qwen3.6-35B-A3B-TQ3_4S/blobs/6af1c2df5cdeac6975079a6e129bc2043f7bbc0f0ac72125a7572016b452216e \
+      --port 8080 --host 0.0.0.0 \
+      --n-gpu-layers 99 \
+      --n-cpu-moe 20 \
+      --no-mmap \
+      --ctx-size 10240 \
+      --cache-type-k q8_0 \
+      --cache-type-v q8_0 \
+      --mlock \
+      --parallel 1 \
+      --batch-size 128 \
+      --ubatch-size 64 \
+      --no-warmup \
+      --jinja
+
 ```
 
 ## Contoh cara benchmark
@@ -458,4 +498,103 @@ lms ps
 lms ls
 # download gguf dr hugging face
 lms get https://huggingface.co/lmstudio-community/codegemma-7b-it-GGUF
-``
+```
+
+## MacOS Support
+
+### fork [llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3):
+
+edit file `ggml/src/ggml-metal/ggml-metal-device.m`
+
+```cpp
+case GGML_OP_MUL_MAT_ID:
+    // return has_simdgroup_reduction && op->src[0]->type != GGML_TYPE_NVFP4;
+    return has_simdgroup_reduction &&
+        op->src[0]->type != GGML_TYPE_NVFP4 &&
+        op->src[0]->type != GGML_TYPE_TQ1_0 &&
+        op->src[0]->type != GGML_TYPE_TQ2_0 &&
+        op->src[0]->type != GGML_TYPE_TQ3_0 &&
+        op->src[0]->type != GGML_TYPE_TQ3_1S &&
+        op->src[0]->type != GGML_TYPE_TQ3_4S;
+```
+
+edit file `ggml/src/ggml-metal/ggml-metal-context.m`
+
+```cpp
+//void ggml_metal_get_tensor_async(ggml_metal_t ctx, const struct ggml_tensor * tensor, void * data, size_t offset, size_t size) {
+void ggml_metal_get_tensor_async(
+        ggml_metal_t ctx,
+        const struct ggml_tensor * tensor,
+        void * data,
+        size_t offset,
+        size_t size) {
+    if (!data || size == 0) {
+        return;
+    }
+
+    @autoreleasepool {
+        id<MTLDevice> device = ggml_metal_device_get_obj(ctx->dev);
+        // id<MTLBuffer> buf_dst = [device newBufferWithBytesNoCopy:data
+        //                                                     length:size
+        //                                                     options:MTLResourceStorageModeShared
+        //                                                 deallocator:nil];
+
+        // GGML_ASSERT(buf_dst);
+
+        // Source GPU buffer
+        struct ggml_metal_buffer_id bid_src = ggml_metal_get_buffer_id(tensor);
+        if (bid_src.metal == nil) {
+            // GGML_ABORT("%s: failed to find buffer for tensor '%s'\n", __func__, tensor->name);
+            GGML_ABORT("%s: failed to find buffer for tensor '%s'\n",
+                    __func__, tensor->name);
+        }
+
+        bid_src.offs += offset;
+    
+        // queue the copy operation into the queue of the Metal context
+        // this will be queued at the end, after any currently ongoing GPU operations
+        // CPU-visible staging buffer
+        id<MTLBuffer> staging = [device newBufferWithLength:size
+                                                    options:MTLResourceStorageModeShared];
+        GGML_ASSERT(staging);
+    
+        // Queue GPU → staging copy
+        id<MTLCommandQueue> queue = ggml_metal_device_get_queue(ctx->dev);
+        id<MTLCommandBuffer> cmd_buf = [queue commandBuffer];
+        id<MTLBlitCommandEncoder> encoder = [cmd_buf blitCommandEncoder];
+    
+        [encoder copyFromBuffer:bid_src.metal
+                    sourceOffset:bid_src.offs
+                    // toBuffer:buf_dst
+                    toBuffer:staging
+                destinationOffset:0
+                            size:size];
+
+        [encoder endEncoding];
+        // [cmd_buf commit];
+        // [buf_dst release];
+    
+        // do not wait here for completion
+        //[cmd_buf waitUntilCompleted];
+        // Copy staging → user buffer when complete
+        __block id<MTLBuffer> staging_ref = [staging retain];
+        [cmd_buf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+            if (cb.status == MTLCommandBufferStatusCompleted) {
+                memcpy(data, staging_ref.contents, size);
+            }
+            [staging_ref release];
+        }];
+
+        [cmd_buf commit];
+    
+        // instead, remember a reference to the command buffer and wait for it later if needed
+        // Track command buffer
+        [ctx->cmd_bufs_ext addObject:cmd_buf];
+        ctx->cmd_buf_last = cmd_buf;
+    
+        [cmd_buf retain];
+    
+        [staging release];
+    }
+}
+```
