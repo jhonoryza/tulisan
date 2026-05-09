@@ -2,7 +2,7 @@
 
 ## non moe model
 
-perlu fork [llama.cpp-tq3]((https://github.com/turbo-tan/llama.cpp-tq3)):
+perlu fork [llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3):
 
 - [x] [models - YTan2000/Qwen3.6-27B-TQ3_4S - turboquant llama.cpp - 13gb](https://huggingface.co/YTan2000/Qwen3.6-27B-TQ3_4S)
 - [ ] [models - Jackrong/Negentropy-claude-opus-4.7-9B-GGUF - 5.63gb](https://huggingface.co/Jackrong/Negentropy-claude-opus-4.7-9B-GGUF)
@@ -18,7 +18,7 @@ perlu fork [llama-cpp-turboquant](https://github.com/TheTom/llama-cpp-turboquant
 - [ ] [mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF](https://huggingface.co/mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF)
 - [ ] [google/gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)
 
-perlu fork [llama.cpp-tq3]((https://github.com/turbo-tan/llama.cpp-tq3)):
+perlu fork [llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3):
 
 - [x] [YTan2000/Qwen3.6-35B-A3B-TQ3_4S](https://huggingface.co/YTan2000/Qwen3.6-35B-A3B-TQ3_4S)
 - [ ] [YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S](https://huggingface.co/YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S)
