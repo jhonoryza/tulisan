@@ -2,7 +2,7 @@
 
 ## non moe model
 
-perlu fork [llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3):
+perlu fork [llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3) atau [llama.cpp-hip-turboquant-tq3](https://github.com/flamme-demon/llama.cpp-hip-turboquant-tq3):
 
 - [x] [models - YTan2000/Qwen3.6-27B-TQ3_4S - turboquant llama.cpp - 13gb](https://huggingface.co/YTan2000/Qwen3.6-27B-TQ3_4S)
 - [ ] [models - Jackrong/Negentropy-claude-opus-4.7-9B-GGUF - 5.63gb](https://huggingface.co/Jackrong/Negentropy-claude-opus-4.7-9B-GGUF)
@@ -18,7 +18,7 @@ perlu fork [llama-cpp-turboquant](https://github.com/TheTom/llama-cpp-turboquant
 - [ ] [mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF](https://huggingface.co/mradermacher/Mixtral_13Bx2_MOE_22B-i1-GGUF)
 - [ ] [google/gemma-4-26B-A4B-it](https://huggingface.co/google/gemma-4-26B-A4B-it)
 
-perlu fork [llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3):
+perlu fork [llama.cpp-tq3](https://github.com/turbo-tan/llama.cpp-tq3) atau [llama.cpp-hip-turboquant-tq3](https://github.com/flamme-demon/llama.cpp-hip-turboquant-tq3):
 
 - [x] [YTan2000/Qwen3.6-35B-A3B-TQ3_4S](https://huggingface.co/YTan2000/Qwen3.6-35B-A3B-TQ3_4S)
 - [ ] [YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S](https://huggingface.co/YTan2000/Gemma4-26b-Super-Abliterated-TQ3_4S)
@@ -152,6 +152,78 @@ performance di RX6600 8GB:
 - ram usage 16144 MB
 - context 262144
 
+support: ROCM
+model: Qwen3.6-35B-A3B-TQ3_4S
+
+./build/bin/llama-server \
+  --model /home/labkita/models/models--YTan2000--Qwen3.6-35B-A3B-TQ3_4S/blobs/6af1c2df5cdeac6975079a6e129bc2043f7bbc0f0ac72125a7572016b452216e \
+  --host 0.0.0.0 --port 8080 \
+  -ngl 99 -c 65536 -np 1 \
+  --n-cpu-moe 26 \
+  -ctk q4_0 -ctv tq3_0 \
+  -fa on \
+  --jinja \
+  --chat-template qwen2 \
+  --no-cache-prompt \
+  --temp 0.2 \
+  --top-p 0.9 \
+  --reasoning on \
+  --reasoning-budget 2048
+
+./build/bin/llama-server \
+  --model /home/labkita/models/models--YTan2000--Qwen3.6-35B-A3B-TQ3_4S/blobs/6af1c2df5cdeac6975079a6e129bc2043f7bbc0f0ac72125a7572016b452216e \
+  --port 8080 --host 0.0.0.0 \
+  -ngl 99 -c 65536 -np 1 --n-cpu-moe 26 \
+  -ctk q4_0 -ctv tq3_0 -fa on \
+  --jinja --mlock --no-warmup \
+  --reasoning off --reasoning-budget 0 
+  # --reasoning on --reasoning-budget 2048
+  # --temp 0.2 \
+  # --top-p 0.9 \
+  # --chat-template qwen \
+  # --no-cache-prompt \
+  # --reasoning-format deepseek
+  curl http://192.168.18.120:8080/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+      "model": "qwen",
+      "messages": [
+        {
+          "role": "system",
+          "content": "You are a helpful assistant that writes clean Go code."
+        },
+        {
+          "role": "user",
+          "content": "Write Golang code using Echo framework"
+        }
+      ],
+      "temperature": 0.2,
+      "top_p": 0.9,
+      "max_tokens": 1024
+    }'
+
+./build/bin/llama-server \
+    --model /home/labkita/models/models--YTan2000--Qwen3.6-35B-A3B-TQ3_4S/blobs/6af1c2df5cdeac6975079a6e129bc2043f7bbc0f0ac72125a7572016b452216e \
+    --port 8080 --host 0.0.0.0 \
+    --n-gpu-layers 99 \
+    --n-cpu-moe 26 \
+    --no-mmap \
+    --ctx-size 65536 \
+    --cache-type-k q4_0 \
+    --cache-type-v tq3_0 \
+    --mlock \
+    --parallel 1 \
+    --batch-size 512 \
+    --ubatch-size 128 \
+    --no-warmup \
+    --temp 0.2 \
+    --top-p 0.9 \
+    --chat-template qwen \
+    --cache-prompt 0 \
+    --clear-idle \
+    --reasoning off --reasoning-budget 0 --reasoning-format deepseek
+    # --flash-attn 'on' \
+    # --jinja \
 
 support: ROCM
 model: Qwen3.6-27B-TQ3_4S
@@ -175,32 +247,32 @@ model: Qwen3.6-27B-TQ3_4S
     --jinja
 
  ./build/bin/llama-server \
-  -hf mradermacher/Qwen3-Desert.Coder.MoE-8X0.6B-i1-GGUF:Q4_K_M \
-  --port 8080 --host 0.0.0.0 \
-  --n-gpu-layers 99 \
-  --ctx-size 40290 \
-  --cache-type-k f16 \
-  --cache-type-v f16 \
-  --flash-attn 1 \
-  --parallel 1 \
-  -b 512 -ub 254 \
-  --chat-template-kwargs '{"preserve_thinking": false}'
+    -hf mradermacher/Qwen3-Desert.Coder.MoE-8X0.6B-i1-GGUF:Q4_K_M \
+    --port 8080 --host 0.0.0.0 \
+    --n-gpu-layers 99 \
+    --ctx-size 40290 \
+    --cache-type-k f16 \
+    --cache-type-v f16 \
+    --flash-attn 1 \
+    --parallel 1 \
+    -b 512 -ub 254 \
+    --chat-template-kwargs '{"preserve_thinking": false}'
 
-  ./build/bin/llama-server \
-      --model /Users/fajar/models/models--YTan2000--Qwen3.6-35B-A3B-TQ3_4S/blobs/6af1c2df5cdeac6975079a6e129bc2043f7bbc0f0ac72125a7572016b452216e \
-      --port 8080 --host 0.0.0.0 \
-      --n-gpu-layers 99 \
-      --n-cpu-moe 20 \
-      --no-mmap \
-      --ctx-size 10240 \
-      --cache-type-k q8_0 \
-      --cache-type-v q8_0 \
-      --mlock \
-      --parallel 1 \
-      --batch-size 128 \
-      --ubatch-size 64 \
-      --no-warmup \
-      --jinja
+./build/bin/llama-server \
+    --model /Users/fajar/models/models--YTan2000--Qwen3.6-35B-A3B-TQ3_4S/blobs/6af1c2df5cdeac6975079a6e129bc2043f7bbc0f0ac72125a7572016b452216e \
+    --port 8080 --host 0.0.0.0 \
+    --n-gpu-layers 99 \
+    --n-cpu-moe 20 \
+    --no-mmap \
+    --ctx-size 10240 \
+    --cache-type-k q8_0 \
+    --cache-type-v q8_0 \
+    --mlock \
+    --parallel 1 \
+    --batch-size 128 \
+    --ubatch-size 64 \
+    --no-warmup \
+    --jinja
 
 ```
 
