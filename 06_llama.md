@@ -111,7 +111,31 @@ notes: ik_llama.cpp ga support untuk ROCM sehingga build nya failed
 ## Cara menjalankan
 
 support: ROCM
-model: Qwen_Qwen3.6-35B-A3B-GGUF
+model: Qwen3.5-9B-GGUF
+
+```bash
+./build/bin/llama-server \
+    --model /home/labkita/models/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf \
+    --port 8080 --host 0.0.0.0 \
+    --n-gpu-layers 99 \
+    --n-cpu-moe 29 \
+    --no-mmap \
+    --ctx-size 65536 \
+    --mlock \
+    --parallel 2 \
+    --cache-type-k q4_0 --cache-type-v q4_0 \
+    --batch-size 128 \
+    --ubatch-size 64 \
+    --jinja --reasoning off --reasoning-budget 0
+```
+
+performance di RX6600 8GB:
+- model bartowski/Qwen_Qwen3.6-35B-A3B-GGUF
+- prompt eval 140 tok/s
+- generate 30 tok/s
+
+support: ROCM
+model: Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf
 
 ```bash
 ./build/bin/llama-server \
@@ -172,11 +196,17 @@ model: Qwen3.6-35B-A3B-TQ3_4S
 
 ./build/bin/llama-server \
   --model /home/labkita/models/models--YTan2000--Qwen3.6-35B-A3B-TQ3_4S/blobs/6af1c2df5cdeac6975079a6e129bc2043f7bbc0f0ac72125a7572016b452216e \
+  --mmproj /home/labkita/models/models--YTan2000--Qwen3.6-35B-A3B-TQ3_4S/blobs/356dfaa3111376a4f7165e32e8749713378d1700b37cf52e0c50d9f23322334d \
   --port 8080 --host 0.0.0.0 \
-  -ngl 99 -c 65536 -np 1 --n-cpu-moe 26 \
-  -ctk q4_0 -ctv tq3_0 -fa on \
-  --jinja --mlock --no-warmup \
-  --reasoning off --reasoning-budget 0 
+  -ctk q4_0 -ctv tq3_0 -fa "on" \
+  --cache-ram 8192 --no-context-shift --clear-idle --kv-unified \
+  -ngl 99 -c 4096 -np 1 --n-cpu-moe 26 --no-mmproj-offload \
+  --jinja --chat-template-file /home/labkita/templates/chat_template.jinja \
+  --reasoning off \
+  --reasoning-budget 0
+  --reasoning-format deepseek
+  
+  # --jinja --mlock --no-warmup \
   # --reasoning on --reasoning-budget 2048
   # --temp 0.2 \
   # --top-p 0.9 \
@@ -274,6 +304,54 @@ model: Qwen3.6-27B-TQ3_4S
     --no-warmup \
     --jinja
 
+```
+
+## Create service
+
+create file `/etc/systemd/system/llama.service`
+
+```bash
+[Unit]
+Description=Llama.cpp Server (Qwen3.5-9B)
+After=network.target
+
+[Service]
+Type=simple
+User=labkita
+Group=labkita
+
+Environment="HSA_ENABLE_SDMA=0"
+Environment="HSA_OVERRIDE_GFX_VERSION=10.3.0"
+Environment="ROCR_VISIBLE_DEVICES=0"
+Environment="HIP_VISIBLE_DEVICES=0"
+Environment="LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64"
+
+# Command
+ExecStart=/home/labkita/Downloads/llama.cpp/build/bin/llama-server \
+    --model /home/labkita/models/Qwen3.5-9B-GGUF/Qwen3.5-9B-Q4_K_M.gguf \
+    --port 8080 --host 0.0.0.0 \
+    --n-gpu-layers 99 \
+    --n-cpu-moe 29 \
+    --no-mmap \
+    --ctx-size 65536 \
+    --mlock \
+    --parallel 2 \
+    --cache-type-k q4_0 --cache-type-v q4_0 \
+    --batch-size 128 \
+    --ubatch-size 64 \
+    --jinja --reasoning off --reasoning-budget 0
+
+# Restart Policy
+Restart=on-failure
+RestartSec=5s
+
+# Resource Limits (Opsional tapi disarankan)
+LimitMEMLOCK=infinity
+LimitNOFILE=65535
+TasksMax=infinity
+
+[Install]
+WantedBy=multi-user.target
 ```
 
 ## Contoh cara benchmark
