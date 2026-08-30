@@ -1,12 +1,17 @@
 # My Vimrc Config
 
-Konfigurasi `~/.vimrc` minimal yang saya pakai sehari-hari. Fokusnya: nyaman untuk coding, indentasi konsisten, dan integrasi Codeium untuk autocomplete AI.
+Konfigurasi `~/.vimrc` minimal yang saya pakai sehari-hari (update 31 Aug 2026 — sekarang pakai `windsurf.vim`). Fokusnya: nyaman untuk coding, indentasi konsisten, dan integrasi Windsurf/Codeium untuk autocomplete AI.
 
 ## File Lengkap
 
 Lokasi file: `~/.vimrc`
 
 ```vim
+call plug#begin()
+" Tambahkan plugin Codeium
+Plug 'Exafunction/windsurf.vim', { 'branch': 'main' }
+call plug#end()
+
 syntax on           " Enable syntax highlighting
 set number          " Show line number
 set relativenumber  " Show relative number
