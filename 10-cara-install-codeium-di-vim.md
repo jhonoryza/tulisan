@@ -1,69 +1,90 @@
 # Cara Install Codeium di Vim
 
-Codeium adalah AI autocomplete gratis (alternatif GitHub Copilot) yang bisa digunakan langsung di Vim dan Neovim. Plugin `codeium.vim` akan otomatis mengunduh dan mengelola Language Server yang sesuai dengan sistem operasi kamu.
+Codeium adalah AI autocomplete gratis (alternatif GitHub Copilot) yang bisa dipakai di Vim dan Neovim. Plugin akan otomatis download Language Server sesuai OS.
 
 ## Prasyarat
 
 * Vim 9.0+ atau Neovim 0.6+
-* Git terinstall
-* Akun Codeium (bisa daftar gratis di [codeium.com](https://codeium.com))
+* Git
+* Akun Codeium/Windsurf ([codeium.com](https://codeium.com) / [windsurf.com](https://windsurf.com))
+
+---
+
+## 0. Siapkan `~/.vimrc` Dulu
+
+> Wajib sebelum `PlugInstall` — biar keymap tidak bentrok `Tab`.
+
+`~/.vimrc` minimal yang dipakai sekarang (sinkron `12-my-vimrc-config.md`):
+
+```vim
+call plug#begin()
+Plug 'Exafunction/windsurf.vim', { 'branch': 'main' }
+" Linux fix (cpo + sk-ws): Plug 'jhonoryza/windsurf-vim-linux'
+call plug#end()
+
+syntax on
+set number
+set relativenumber
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set cursorline
+
+imap <script><silent><nowait><expr> <C-g> codeium#Accept()
+imap <script><silent><nowait><expr> <C-h> codeium#AcceptNextWord()
+imap <script><silent><nowait><expr> <C-j> codeium#AcceptNextLine()
+imap <C-;>   <Cmd>call codeium#CycleCompletions(1)<CR>
+imap <C-,>   <Cmd>call codeium#CycleCompletions(-1)<CR>
+imap <C-x>   <Cmd>call codeium#Clear()<CR>
+" Trigger manual (opsional)
+" let g:codeium_manual = v:true
+imap <C-Space> <Cmd>call codeium#Complete()<CR>
+imap <M-Bslash> <Cmd>call codeium#Complete()<CR>
+```
+
+> Mac pakai config di atas langsung jalan. Linux lihat Catatan Khusus di bawah.
 
 ---
 
 ## 1. Install Plugin
 
-### Opsi A: Menggunakan vim-plug (Paling Mudah)
-
-Tambahkan baris ini ke file konfigurasi kamu:
-
-* Untuk **Vim**: `~/.vimrc`
-* Untuk **Neovim**: `~/.config/nvim/init.vim` atau `init.lua` (dengan syntax vim-plug)
-
-```vim
-Plug 'Exafunction/codeium.vim'
-```
-
-Kemudian buka Vim dan jalankan:
+### Opsi A: vim-plug (disarankan)
 
 ```vim
 :PlugInstall
 ```
+Restart Vim.
 
-### Opsi B: Install Manual (Tanpa Plugin Manager)
-
-Jika kamu tidak menggunakan plugin manager, clone langsung ke folder package Vim:
-
-```bash
-git clone https://github.com/Exafunction/codeium.vim ~/.vim/pack/Exafunction/start/codeium.vim
-```
-
-Untuk Neovim, path-nya:
+### Opsi B: Manual
 
 ```bash
-git clone https://github.com/Exafunction/codeium.vim ~/.local/share/nvim/site/pack/Exafunction/start/codeium.vim
-```
+# Vim
+git clone https://github.com/Exafunction/windsurf.vim ~/.vim/pack/Exafunction/start/windsurf.vim
+# atau Linux fix
+git clone https://github.com/jhonoryza/windsurf-vim-linux ~/.vim/pack/Exafunction/start/windsurf.vim
 
-Setelah selesai, restart Vim/Neovim.
+# Neovim
+git clone https://github.com/Exafunction/windsurf.vim ~/.local/share/nvim/site/pack/Exafunction/start/windsurf.vim
+```
 
 ---
 
-## 2. Autentikasi (Pasang API Key Langsung)
+## 2. Pasang API Key (Tanpa Browser)
 
-`:Codeium Auth` versi original buka browser + `curl https://api.codeium.com/register_user/` — sekarang sudah tidak aktif / dipakai web lain, jadi langsung pasang file `config.json` saja:
+`:Codeium Auth` original buka browser + `curl https://api.codeium.com/register_user/` — sekarang deprecated, langsung tulis file:
 
-**Mac** (aman, path default Codeium):
+**Mac** (`~/.codeium/config.json`):
 ```bash
 mkdir -p ~/.codeium
 echo '{"apiKey":"sk-..."}' > ~/.codeium/config.json
-# atau via Vim tanpa browser:
+# atau di Vim:
 :Codeium Auth sk-xxxx
 ```
 
-**Linux** (Windsurf `sk-ws-`, path `~/.config/Codeium`):
+**Linux** (Windsurf `sk-ws-`, `~/.config/Codeium/config.json`):
 ```bash
 mkdir -p ~/.config/Codeium
 echo '{"apiKey":"sk-ws-01-..."}' > ~/.config/Codeium/config.json
-# atau via Vim:
 :Codeium Auth sk-ws-01-xxxx
 ```
 
@@ -71,47 +92,40 @@ Cek:
 ```bash
 cat ~/.config/Codeium/config.json  # Linux
 cat ~/.codeium/config.json          # Mac
-# atau di Vim:
-:echo codeium#command#ApiKey()[:12]
+:echo codeium#command#ApiKey()[:12]  # di Vim
 ```
 
-> Language Server akan otomatis terunduh saat pertama kali Vim dibuka. Jika masih `.gz`, lihat Troubleshooting poin 2.
+> Language Server auto-download saat pertama buka Vim. Jika masih `.gz` lihat Troubleshooting.
 
 ---
 
-## 3. Cara Penggunaan
+## 3. Cara Pakai
 
-Codeium akan otomatis memberikan saran kode berwarna abu-abu (ghost text) saat kamu mengetik.
+Ghost text abu-abu muncul otomatis (atau `C-Space` kalau `g:codeium_manual`).
 
-| Aksi | Shortcut Default |
+| Aksi | Keymap `~/.vimrc` |
 | :--- | :--- |
-| Terima saran | `Tab` |
-| Batalkan saran | `Ctrl + ]` |
-| Saran berikutnya | `Alt + ]` |
-| Saran sebelumnya | `Alt + [` |
-
-Kamu juga bisa cek status dengan:
+| Terima semua | `Ctrl+g` |
+| Terima kata | `Ctrl+h` |
+| Terima baris | `Ctrl+j` |
+| Next / Prev | `Ctrl+;` / `Ctrl+,` |
+| Batal | `Ctrl+x` |
+| Trigger manual | `Ctrl+Space` / `Alt+\` |
 
 ```vim
-:Codeium Enable
-:Codeium Disable
-:Codeium Status
+:Codeium Enable / Disable / Status
 ```
 
 ---
 
 ## 4. Troubleshooting
 
-**1. Saran tidak muncul?**
-Pastikan kamu sudah `:Codeium Auth` dan cek status dengan `:Codeium Status`. Coba `:Codeium Enable` jika status masih disabled.
+**Saran tidak muncul?** `:Codeium Status` → `:Codeium Enable`
 
-**2. Language Server gagal download?**
-Cek koneksi internet dan pastikan Vim memiliki akses untuk mengeksekusi binary di `~/.vim/pack/Exafunction/start/codeium.vim/`. Di Linux kadang file masih `.gz` (corrupt 4.1M) — extract manual:
-
+**Language Server `.gz` corrupt (4.1M)?**
 ```bash
 ls -lh ~/.local/share/.codeium/bin/*/language_server_linux_x64.gz
 rm -f ~/.local/share/.codeium/bin/*/language_server_linux_x64.gz
-# biarkan plugin download ulang, atau manual:
 curl -Lo /tmp/ls.gz https://github.com/Exafunction/codeium/releases/download/language-server-v1.20.8/language_server_linux_x64.gz
 mkdir -p ~/.local/share/.codeium/bin/37f12b83df389802b7d4e293b3e1a986aca289c0
 gzip -dc /tmp/ls.gz > ~/.local/share/.codeium/bin/37f12b83df389802b7d4e293b3e1a986aca289c0/language_server_linux_x64
@@ -119,63 +133,38 @@ chmod +x ~/.local/share/.codeium/bin/37f12b83df389802b7d4e293b3e1a986aca289c0/la
 pkill -9 language_server; rm -rf /tmp/*codeium*
 ```
 
-**3. Konflik dengan Tab?**
-Jika `Tab` bertabrakan dengan plugin lain (seperti CoC atau Supertab), kamu bisa mapping ulang di `.vimrc`:
-
+**Tab bentrok?**
 ```vim
 let g:codeium_no_map_tab = 1
-imap <script><silent><nowait><expr> <C-g> codeium#Accept()
 ```
 
-**4. Error `E723` / `E10: \ should be followed by` di Vim 9.2 Linux?**
-Vim 9.2 di Linux `cpo` mengandung `C` sehingga `autoload/codeium.vim` gagal parse `Dictionary` dengan `\` continuation. Fix ada di fork Linux: https://github.com/jhonoryza/windsurf-vim-linux (tambah `set cpo&vim`).
+**`E723` / `E10` di Vim 9.2 Linux?** `cpo` mengandung `C` → fix di `jhonoryza/windsurf-vim-linux` (`set cpo&vim`).
 
 ---
 
 ## 5. Catatan Khusus Linux (Windsurf)
 
-Di Mac instalasi di atas langsung jalan. Di Linux (terutama Vim 9.2, server `codeium.com` sudah deprecated untuk key `sk-ws-` Windsurf), butuh penyesuaian:
+Mac langsung jalan, Linux butuh:
 
-1. **Rebrand Codeium → Windsurf**: Install `windsurf.vim` (fork resmi Codeium):
-   ```vim
-   Plug 'Exafunction/windsurf.vim'
-   " atau fix Linux: Plug 'jhonoryza/windsurf-vim-linux'
-   ```
-
-2. **API key tanpa call server**: Server `api.codeium.com/register_user` sudah tidak aktif / dipakai web lain. Plugin original `Auth` buka browser + `curl` ke `register_user` akan gagal. Fix minimal di `windsurf-vim-linux` baca langsung dari `~/.config/Codeium/config.json`:
-   ```bash
-   cat ~/.config/Codeium/config.json  # {"apiKey":"sk-ws-..."}
-   # atau set manual tanpa browser:
-   :Codeium Auth sk-ws-01-xxxx
-   ```
-   Tanpa `curl`, tanpa browser.
-
-3. **Binary path**: Default `~/.local/share/.codeium/bin/<sha>/language_server_linux_x64` (bukan `~/.local/bin`). Jika kamu taro manual di `~/.local/bin`, set di `.vimrc`:
-   ```vim
-   let g:codeium_bin = $HOME.'/.local/bin/language_server_linux_x64'
-   ```
-
-4. **Server deprecated**: Untuk key `sk-ws-` harus pakai `server.windsurf.com` + `portal_url windsurf.com` (bukan `server.codeium.com`). Fork Linux otomatis set ini kalau key diawali `sk-ws-`.
-
-> Di **Mac** aman tanpa custom — `cpo` dan `server.codeium.com` masih kompatibel.
+1. Pakai `windsurf.vim` (bukan `codeium.vim` lama)
+2. API key via file (di atas) — tanpa `register_user`
+3. Binary default `~/.local/share/.codeium/bin/<sha>/language_server_linux_x64` — kalau di `~/.local/bin`, set `let g:codeium_bin = $HOME.'/.local/bin/language_server_linux_x64'`
+4. Key `sk-ws-` otomatis pakai `server.windsurf.com` (fork Linux handle ini)
 
 ---
 
-## Download & Release (Otomatis, Tidak Wajib Manual)
+## Download (Otomatis)
 
-Language Server **otomatis terunduh** saat `PlugInstall` / pertama kali buka Vim (`server.vim` akan `curl` ke `language-server-v1.20.8`), tidak perlu download manual.
+Tidak perlu manual. Auto `curl` saat `PlugInstall`. Link hanya referensi jika auto gagal:
 
-Link di bawah hanya referensi jika auto gagal (lihat Troubleshooting poin 2):
-
-* **Download Page:** https://github.com/Exafunction/codeium/releases?page=1#release-language-server-v2.12.5
+* https://github.com/Exafunction/codeium/releases
 
 ---
 
 ## Kesimpulan
 
-Cukup 2 langkah utama untuk menggunakan Codeium di Vim:
+1. **Siapkan `~/.vimrc`** dulu (plug + keymap)
+2. **Install plugin** (`:PlugInstall`)
+3. **Pasang API key** ke file (`~/.codeium` Mac / `~/.config/Codeium` Linux)
 
-1. **Install plugin** via `vim-plug` atau manual clone
-2. **Pasang API key** langsung ke file (`~/.codeium/config.json` di Mac, `~/.config/Codeium/config.json` di Linux) atau `:Codeium Auth sk-...` tanpa browser
-
-Setelah itu kamu sudah bisa menikmati autocomplete AI gratis langsung di dalam Vim/Neovim tanpa konfigurasi tambahan.
+Selesai — autocomplete jalan tanpa browser.
