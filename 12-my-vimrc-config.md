@@ -26,6 +26,10 @@ imap <script><silent><nowait><expr> <C-j> codeium#AcceptNextLine()
 imap <C-;>   <Cmd>call codeium#CycleCompletions(1)<CR>
 imap <C-,>   <Cmd>call codeium#CycleCompletions(-1)<CR>
 imap <C-x>   <Cmd>call codeium#Clear()<CR>
+" Trigger manual (biar tidak auto tiap ketik, uncomment jika mau manual only)
+" let g:codeium_manual = v:true
+imap <C-Space> <Cmd>call codeium#Complete()<CR>
+imap <M-Bslash> <Cmd>call codeium#Complete()<CR>
 ```
 
 ---
@@ -58,6 +62,8 @@ Saya tidak pakai `Tab` default dari Codeium agar tidak bentrok dengan completion
 | `Ctrl+;` `<C-;>` | `codeium#CycleCompletions(1)` — Cycle ke saran **berikutnya** |
 | `Ctrl+,` `<C-,>` | `codeium#CycleCompletions(-1)` — Cycle ke saran **sebelumnya** |
 | `Ctrl+x` `<C-x>` | `codeium#Clear()` — Hapus / batalkan saran yang sedang tampil |
+| `Ctrl+Space` `<C-Space>` | `codeium#Complete()` — Trigger manual (jika `g:codeium_manual` aktif) |
+| `Alt+\` `<M-Bslash>` | `codeium#Complete()` — Fallback trigger manual |
 
 Atribut ` <script><silent><nowait><expr>` pada `imap` memastikan mapping berjalan tanpa delay dan tanpa echo di command line.
 
