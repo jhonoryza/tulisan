@@ -161,9 +161,11 @@ Di Mac instalasi di atas langsung jalan. Di Linux (terutama Vim 9.2, server `cod
 
 ---
 
-## Download & Release
+## Download & Release (Otomatis, Tidak Wajib Manual)
 
-Download Language Server dan binary terbaru Codeium tersedia di halaman release resmi:
+Language Server **otomatis terunduh** saat `PlugInstall` / pertama kali buka Vim (`server.vim` akan `curl` ke `language-server-v1.20.8`), tidak perlu download manual.
+
+Link di bawah hanya referensi jika auto gagal (lihat Troubleshooting poin 2):
 
 * **Download Page:** https://github.com/Exafunction/codeium/releases?page=1#release-language-server-v2.12.5
 
