@@ -47,22 +47,35 @@ Setelah selesai, restart Vim/Neovim.
 
 ---
 
-## 2. Autentikasi
+## 2. Autentikasi (Pasang API Key Langsung)
 
-Setelah plugin terpasang, buka Vim dan jalankan perintah:
+`:Codeium Auth` versi original buka browser + `curl https://api.codeium.com/register_user/` — sekarang sudah tidak aktif / dipakai web lain, jadi langsung pasang file `config.json` saja:
 
-```vim
-:Codeium Auth
+**Mac** (aman, path default Codeium):
+```bash
+mkdir -p ~/.codeium
+echo '{"apiKey":"sk-..."}' > ~/.codeium/config.json
+# atau via Vim tanpa browser:
+:Codeium Auth sk-xxxx
 ```
 
-Langkah selanjutnya:
+**Linux** (Windsurf `sk-ws-`, path `~/.config/Codeium`):
+```bash
+mkdir -p ~/.config/Codeium
+echo '{"apiKey":"sk-ws-01-..."}' > ~/.config/Codeium/config.json
+# atau via Vim:
+:Codeium Auth sk-ws-01-xxxx
+```
 
-1. Browser akan terbuka otomatis ke halaman login Codeium.
-2. Login / daftar akun, kemudian copy API token yang diberikan.
-3. Paste token tersebut kembali ke terminal Vim saat diminta.
-4. Jika berhasil, akan muncul notifikasi `Codeium: Authenticated`.
+Cek:
+```bash
+cat ~/.config/Codeium/config.json  # Linux
+cat ~/.codeium/config.json          # Mac
+# atau di Vim:
+:echo codeium#command#ApiKey()[:12]
+```
 
-> Language Server akan otomatis terunduh saat pertama kali autentikasi berhasil. Tunggu beberapa detik hingga selesai.
+> Language Server akan otomatis terunduh saat pertama kali Vim dibuka. Jika masih `.gz`, lihat Troubleshooting poin 2.
 
 ---
 
@@ -161,6 +174,6 @@ Download Language Server dan binary terbaru Codeium tersedia di halaman release 
 Cukup 2 langkah utama untuk menggunakan Codeium di Vim:
 
 1. **Install plugin** via `vim-plug` atau manual clone
-2. **Autentikasi** dengan `:Codeium Auth`
+2. **Pasang API key** langsung ke file (`~/.codeium/config.json` di Mac, `~/.config/Codeium/config.json` di Linux) atau `:Codeium Auth sk-...` tanpa browser
 
 Setelah itu kamu sudah bisa menikmati autocomplete AI gratis langsung di dalam Vim/Neovim tanpa konfigurasi tambahan.
